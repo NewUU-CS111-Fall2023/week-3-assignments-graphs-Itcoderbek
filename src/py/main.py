@@ -1,84 +1,155 @@
 # * Author:Diyorbek Adxamov
-# * Date:30.10.2023 task 4 and task5
-#task 4
-from collections import deque
+# * Date:30.10.2023 
+# Task 1
+import sys
+input = sys.stdin.readline
+
+n, m, k = map(int, input().split())
+edges = [list(map(int, input().split())) for i in range(m)] 
+forbidden = [list(map(int, input().split())) for i in range(k)]
+
+graph = [[] for i in range(n+1)]
+for x, y in edges:
+    graph[x].append(y)
+    graph[y].append(x)
+
+dist = [-1] * (n+1) 
+dist[1] = 0
+queue = [1]
+while queue:
+    u = queue.pop(0)
+    for v in graph[u]:
+        if dist[v] == -1:
+           dist[v] = dist[u] + 1
+           queue.append(v)
+
+if dist[n] == -1:
+    print(-1)
+else:
+    print(dist[n])
+    path = [n]
+    u = n
+    while u != 1:
+        for v in graph[u]:
+            if dist[v] == dist[u] - 1:
+                path.append(v)
+                u = v
+                break
+    print(*path[::-1])
 
 
-def numIslands(grid):
-    if not grid:
-        return 0
+# Task 2
+import sys
+input = sys.stdin.readline
 
-    num_rows = len(grid)
-    num_cols = len(grid[0])
-    num_islands = 0
+n, m, j = map(int, input().split())
+grid = [input() for i in range(n)]
 
-    def dfs(row, col):
-        if row < 0 or row >= num_rows or col < 0 or col >= num_cols or grid[row][col] != "1":
-            return
+def dfs(i, j, jumps):
+    if grid[i][j] == 's':
+        if jumps > 0:
+            return dfs(i, j, jumps-1)
+        else:
+            return False
+    
+    if grid[i][j] == 'x':
+        return True
+    
+    if grid[i][j] == '@':
+        return (i, j) == (0, 0)
+    
+    grid[i][j] = '#'
+    
+    for di, dj in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+        ni, nj = i + di, j + dj
+        if 0 <= ni < n and 0 <= nj < m and grid[ni][nj] != '#':
+            if dfs(ni, nj, jumps):
+                return True
+    
+    return False
+        
+if dfs(0, 0, j):
+    print("SUCCESS")
+else:
+    print("IMPOSSIBLE")
+    
 
-        grid[row][col] = "#"
+# Task 3 
+a, b = map(int, input().split())
 
-        # Explore the neighbors
-        dfs(row - 1, col)  # Up
-        dfs(row + 1, col)  # Down
-        dfs(row, col - 1)  # Left
-        dfs(row, col + 1)  # Right
+def transform(a, b):
+    q = [(a, 0)]
+    visited = set()
+    
+    while q:
+        x, steps = q.pop(0)
+        if x == b:
+            return steps+1
+        if x in visited: 
+            continue
+            
+        visited.add(x)
+        q.append((2*x, steps+1)) 
+        q.append((10*x + 1, steps+1))
+        
+    return -1
 
-    for i in range(num_rows):
-        for j in range(num_cols):
-            if grid[i][j] == "1":
-                num_islands += 1
-                dfs(i, j)
+steps = transform(a, b)
 
-    return num_islands
+if steps == -1:
+    print("NO")
+else:
+    print("YES")
+    print(steps)
+    seq = [a]
+    for i in range(steps-1):
+        if seq[-1] * 2 == b:
+            seq.append(seq[-1] * 2)
+        else:
+            seq.append(10*seq[-1] + 1)
+    print(*seq)
+    
+        
+# Task 4
+n = int(input())
+strs = [input() for i in range(n)]
+
+used = set()
+ans = []
+
+def assemble(part):
+    if len(part) == len(strs):
+        return True
+    
+    for s in strs:
+        if s not in used and s.startswith(part):
+            used.add(s)
+            if assemble(part + s[len(part):]):
+                ans.append(s)
+                return True
+            used.remove(s)
+    return False
+
+assemble("")
+print("".join(reversed(ans)))
 
 
-def dijkstra_shortest_paths(graph, source):
-    num_vertices = len(graph)
-    distances = [float("inf")] * num_vertices
-    distances[source] = 0
-    visited = [False] * num_vertices
-
-    for _ in range(num_vertices):
-        # Find the vertex with the minimum distance value
-        min_distance = float("inf")
-        min_vertex = -1
-
-        for v in range(num_vertices):
-            if not visited[v] and distances[v] < min_distance:
-                min_distance = distances[v]
-                min_vertex = v
-
-        visited[min_vertex] = True
-
-        # Update distances of the adjacent vertices
-        for neighbor, weight in graph[min_vertex]:
-            if not visited[neighbor] and distances[min_vertex] + weight < distances[neighbor]:
-                distances[neighbor] = distances[min_vertex] + weight
-
-    return distances
-
-
-# Example usage for finding the number of islands
-grid = [
-    ["1", "1", "0", "0", "0"],
-    ["1", "1", "0", "0", "0"],
-    ["0", "0", "1", "0", "0"],
-    ["0", "0", "0", "1", "1"],
-]
-islands = numIslands(grid)
-print(f"Number of islands: {islands}")
-
-#Task 5: Example usage for finding shortest paths using Dijkstra's Algorithm
-graph = [
-    [(1, 4), (2, 1)],
-    [(3, 1)],
-    [(1, 2), (3, 5)],
-    [(4, 3)],
-    [(2, 3)],
-]
-source_vertex = 0
-distances = dijkstra_shortest_paths(graph, source_vertex)
-print("Shortest distances from the source vertex:")
-for i, distance in enumerate(distances):
-    print(f"To vertex {i}: {distance}")
+# Task 5
+n, x = map(int, input().split())
+graph = [[] for i in range(n+1)]
+for i in range(n-1):
+    a, b = map(int, input().split())
+    graph[a].append(b)
+    graph[b].append(a)
+    
+dist = [-1] * (n+1)
+dist[1] = 0 
+queue = [1]
+while queue:
+    u = queue.pop(0)
+    for v in graph[u]:
+        if dist[v] == -1:
+            dist[v] = dist[u] + 1
+            queue.append(v)
+            
+print(dist[x])
